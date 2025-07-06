@@ -1,5 +1,3 @@
-import React from 'react'
-
 interface Session {
   id: number
   start: Date

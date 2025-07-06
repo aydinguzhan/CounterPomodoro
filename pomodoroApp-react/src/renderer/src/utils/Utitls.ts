@@ -1,6 +1,4 @@
-export class Util<T> {
-  constructor(private ref: T) {}
-
+export class Util {
   setTimer(callback: (val: number) => void, startTime: number): NodeJS.Timeout {
     let total = startTime
 

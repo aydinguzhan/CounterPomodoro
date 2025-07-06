@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useState, useReducer } from 'react'
 import Confetti from 'react-confetti'
 import { Util } from '../utils/Utitls'
 import { useWindowSize } from '../hooks/useWindowSize'
@@ -12,25 +12,34 @@ type Session = {
 }
 
 export default function Counter() {
-  const ref = useRef(null)
   const { width, height } = useWindowSize()
 
   const [inputMinute, setInputMinute] = useState<string>('30')
   const [count, setCount] = useState<number>(0)
-  const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
-  const [isRunning, setIsRunning] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
-  const [showCongrats, setShowCongrats] = useState(false)
 
+  const [state, dispatchReducer] = useReducer(
+    (action: any, state: any) => {
+      return { ...action, ...state }
+    },
+    {
+      intervalId: null,
+      isRunning: false,
+      isPaused: false,
+      sessionStartTime: null
+    }
+  )
+
+  const { intervalId, isRunning, isPaused, sessionStartTime } = state
+
+  const [showCongrats, setShowCongrats] = useState(false)
   const [sessionHistory, setSessionHistory] = useState<Session[]>([])
-  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null)
+
   const [panelOpen, setPanelOpen] = useState(false)
 
-  const util = new Util(ref)
+  const util = new Util()
 
   const totalWorkedSeconds = sessionHistory.reduce((acc, s) => acc + s.duration, 0)
 
-  // 🎯 Veriyi localStorage'dan yükle (ilk render)
   useEffect(() => {
     const stored = localStorage.getItem('sessionHistory')
     if (stored) {
@@ -44,7 +53,6 @@ export default function Counter() {
     }
   }, [])
 
-  // 💾 Her session değiştiğinde localStorage'a yaz
   useEffect(() => {
     localStorage.setItem('sessionHistory', JSON.stringify(sessionHistory))
   }, [sessionHistory])
@@ -54,40 +62,56 @@ export default function Counter() {
     const totalSeconds = parseInt(inputMinute) * 60
     setCount(totalSeconds)
     const id = util.setTimer(setCount, totalSeconds)
-    setIntervalId(id)
-    setIsRunning(true)
-    setIsPaused(false)
-    setSessionStartTime(new Date())
+
+    dispatchReducer({
+      intervalId: id,
+      isRunning: true,
+      isPaused: false,
+      sessionStartTime: new Date()
+    })
   }
 
   const pauseTimer = () => {
     if (intervalId) clearInterval(intervalId)
-    setIntervalId(null)
-    setIsRunning(false)
-    setIsPaused(true)
+
+    dispatchReducer({
+      intervalId: null,
+      isRunning: false,
+      isPaused: true
+    })
   }
 
   const resumeTimer = () => {
     const id = util.setTimer(setCount, count)
-    setIntervalId(id)
-    setIsRunning(true)
-    setIsPaused(false)
+    dispatchReducer({
+      intervalId: id,
+      isRunning: true,
+      isPaused: false
+    })
   }
 
   const stopTimer = () => {
     if (intervalId) clearInterval(intervalId)
-    setIntervalId(null)
-    setIsRunning(false)
-    setIsPaused(false)
+    dispatchReducer({
+      intervalId: null,
+      isRunning: false,
+      isPaused: false
+    })
   }
 
   const resetTimer = () => {
     if (intervalId) clearInterval(intervalId)
     setCount(0)
-    setIsRunning(false)
-    setIsPaused(false)
-    setIntervalId(null)
-    setSessionStartTime(null)
+    dispatchReducer({
+      intervalId: null,
+      isRunning: false,
+      isPaused: false,
+      sessionStartTime: null
+    })
+    // setIsRunning(false)
+    // setIsPaused(false)
+    // setIntervalId(null)
+    // setSessionStartTime(null)
   }
 
   const handlePause = () => {
@@ -120,6 +144,7 @@ export default function Counter() {
     if (!isRunning && !isPaused) return 'Başlat'
     if (isRunning) return 'Durdur'
     if (isPaused) return 'Devam Et'
+    return ''
   }
 
   const closeCongrats = () => {
@@ -134,7 +159,6 @@ export default function Counter() {
     setSessionHistory([])
   }
 
-  // Sayaç sıfırlandığında
   useEffect(() => {
     if (count === 0 && (isRunning || isPaused)) {
       stopTimer()
@@ -153,19 +177,17 @@ export default function Counter() {
         ])
       }
       setShowCongrats(true)
-      setSessionStartTime(null)
+      dispatchReducer({ sessionStartTime: null })
     }
   }, [count])
 
   return (
     <>
-      {/* Geçmiş Panelini Aç */}
       <button onClick={() => setPanelOpen(true)} className="history-button">
         <span className="icon">📜</span>
         <span>Geçmiş</span>
       </button>
 
-      {/* Session Geçmiş Paneli */}
       <SessionHistoryPanel
         isOpen={panelOpen}
         sessions={sessionHistory}
@@ -177,7 +199,6 @@ export default function Counter() {
       <div className="counter-container">
         <h1>Geri Sayım</h1>
 
-        {/* Giriş Alanı */}
         <div className="counter-input-wrapper">
           <label className="input-label" htmlFor="minute-input">
             Çalışma Süresi
