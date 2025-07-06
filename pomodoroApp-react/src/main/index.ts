@@ -5,11 +5,22 @@ import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
   // Create the browser window.
+  const splash = new BrowserWindow({
+    width: 400,
+    height: 700,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true
+  })
+
+  splash.loadFile(join(__dirname, '../public/splash.html'))
+
   const mainWindow = new BrowserWindow({
     width: 400,
     height: 700,
     show: false,
     autoHideMenuBar: true,
+    title: 'Pomodoro ⏱️',
     frame: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
@@ -17,9 +28,12 @@ function createWindow(): void {
       sandbox: false
     }
   })
+  mainWindow.once('ready-to-show', () => {
+    setTimeout(() => {
+      splash.destroy() // splash kapatılır
+    }, 2500)
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow.show() // ana pencere gösterilir
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

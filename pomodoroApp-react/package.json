@@ -21,8 +21,9 @@
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "build": {
+    "productName": "PomodoroApp",
     "appId": "com.aydinguzhan.counterpomodoro",
-    "productName": "CounterPomodoro",
+    "icon": "resources/icon.ico",
     "directories": {
       "output": "dist"
     },
@@ -35,6 +36,12 @@
     "win": {
       "target": "nsis",
       "icon": "resources/icon.ico"
+    },
+    "mac": {
+      "target": []
+    },
+    "linux": {
+      "target": []
     },
     "nsis": {
       "oneClick": false,

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pomodoro Yükleniyor</title>
+    <style>
+      body {
+        background: #1e1e2f;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        height: 100vh;
+        margin: 0;
+        font-family: sans-serif;
+      }
+
+      .clock {
+        width: 80px;
+        height: 80px;
+        border: 6px solid #fff;
+        border-radius: 50%;
+        position: relative;
+        animation: spin 1.5s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      .hand {
+        width: 4px;
+        height: 35%;
+        background-color: #fff;
+        position: absolute;
+        top: 10%;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        transform-origin: bottom;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .text {
+        font-size: 18px;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="clock">
+      <div class="hand"></div>
+    </div>
+    <div class="text">Pomodoro Yükleniyor...</div>
+  </body>
+</html>
