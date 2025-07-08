@@ -3,6 +3,8 @@ import Confetti from 'react-confetti'
 import { Util } from '../utils/Utitls'
 import { useWindowSize } from '../hooks/useWindowSize'
 import SessionHistoryPanel from './SessionHistoryPanel'
+import { usePage } from '@renderer/hooks/usePage'
+import { PageRoute } from '@renderer/utils/enums'
 
 type Session = {
   id: number
@@ -13,7 +15,7 @@ type Session = {
 
 export default function Counter() {
   const { width, height } = useWindowSize()
-
+  const { setPage } = usePage()
   const [inputMinute, setInputMinute] = useState<string>('30')
   const [count, setCount] = useState<number>(0)
 
@@ -108,10 +110,6 @@ export default function Counter() {
       isPaused: false,
       sessionStartTime: null
     })
-    // setIsRunning(false)
-    // setIsPaused(false)
-    // setIntervalId(null)
-    // setSessionStartTime(null)
   }
 
   const handlePause = () => {
@@ -180,12 +178,29 @@ export default function Counter() {
       dispatchReducer({ sessionStartTime: null })
     }
   }, [count])
-
+  const handleClick = () => {
+    window.electronAPI.sendPing('Merhaba Renderer tarafı!')
+  }
   return (
     <>
-      <button onClick={() => setPanelOpen(true)} className="history-button">
+      <button
+        onClick={() => {
+          handleClick()
+          setPanelOpen(true)
+        }}
+        className="history-button"
+      >
         <span className="icon">📜</span>
         <span>Geçmiş</span>
+      </button>
+      <button
+        onClick={() => {
+          setPage(PageRoute.DASHBOARD)
+        }}
+        className="history-button"
+      >
+        <span className="icon">📜</span>
+        <span>Dashboard</span>
       </button>
 
       <SessionHistoryPanel

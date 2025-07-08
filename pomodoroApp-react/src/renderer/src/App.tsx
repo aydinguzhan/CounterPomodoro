@@ -1,12 +1,11 @@
-import Versions from './components/Versions'
-import Counter from './components/Counter'
+import { PageProvider, usePage } from './hooks/usePage'
+import PageRouter from './pages/PageRouter'
 
 function App(): React.JSX.Element {
   return (
-    <>
-      <Counter />
-      <Versions></Versions>
-    </>
+    <PageProvider>
+      <PageRouter />
+    </PageProvider>
   )
 }
 
