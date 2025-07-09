@@ -2,15 +2,23 @@ import { useEffect, useState, useReducer } from 'react'
 import Confetti from 'react-confetti'
 import { Util } from '../utils/Utitls'
 import { useWindowSize } from '../hooks/useWindowSize'
-import SessionHistoryPanel from './SessionHistoryPanel'
+import SessionTaskHistoryPanel from './SessionHistoryPanel'
 import { usePage } from '@renderer/hooks/usePage'
 import { PageRoute } from '@renderer/utils/enums'
+import TaskModal from './TaskModal'
 
-type Session = {
+// Tip tanimlari
+export type Session = {
   id: number
   start: Date
   end: Date
   duration: number
+}
+
+export type Task = {
+  id: number
+  name: string
+  completed: boolean
 }
 
 export default function Counter() {
@@ -18,6 +26,24 @@ export default function Counter() {
   const { setPage } = usePage()
   const [inputMinute, setInputMinute] = useState<string>('30')
   const [count, setCount] = useState<number>(0)
+  const [taskModalOpen, setTaskModalOpen] = useState(false)
+  const [taskHistory, setTaskHistory] = useState<Task[]>([])
+
+  const addTask = (name: string) => {
+    setTaskHistory((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        name,
+        completed: false
+      }
+    ])
+  }
+  const toggleTaskCompleted = (id: number) => {
+    setTaskHistory((prev) =>
+      prev.map((task) => (task.id === id ? { ...task, completed: !task.completed } : task))
+    )
+  }
 
   const [state, dispatchReducer] = useReducer(
     (action: any, state: any) => {
@@ -32,12 +58,10 @@ export default function Counter() {
   )
 
   const { intervalId, isRunning, isPaused, sessionStartTime } = state
-
   const [showCongrats, setShowCongrats] = useState(false)
   const [sessionHistory, setSessionHistory] = useState<Session[]>([])
 
   const [panelOpen, setPanelOpen] = useState(false)
-
   const util = new Util()
 
   const totalWorkedSeconds = sessionHistory.reduce((acc, s) => acc + s.duration, 0)
@@ -157,6 +181,14 @@ export default function Counter() {
     setSessionHistory([])
   }
 
+  const deleteTask = (id: number) => {
+    setTaskHistory((prev) => prev.filter((t) => t.id !== id))
+  }
+
+  const clearAllTasks = () => {
+    setTaskHistory([])
+  }
+
   useEffect(() => {
     if (count === 0 && (isRunning || isPaused)) {
       stopTimer()
@@ -178,37 +210,45 @@ export default function Counter() {
       dispatchReducer({ sessionStartTime: null })
     }
   }, [count])
+
   const handleClick = () => {
     window.electronAPI.sendPing('Merhaba Renderer tarafı!')
   }
+
   return (
     <>
-      <button
-        onClick={() => {
-          handleClick()
-          setPanelOpen(true)
-        }}
-        className="history-button"
-      >
-        <span className="icon">📜</span>
-        <span>Geçmiş</span>
-      </button>
-      <button
-        onClick={() => {
-          setPage(PageRoute.DASHBOARD)
-        }}
-        className="history-button"
-      >
-        <span className="icon">📜</span>
-        <span>Dashboard</span>
-      </button>
+      <div className="button-area">
+        <button
+          onClick={() => {
+            handleClick()
+            setPanelOpen(true)
+          }}
+          className="history-button"
+        >
+          <span className="icon">📜</span>
+          <span>Geçmiş</span>
+        </button>
 
-      <SessionHistoryPanel
+        <button className="history-button" onClick={() => setTaskModalOpen(true)}>
+          <span className="icon">➕</span>
+          <span>Görev Ekle</span>
+        </button>
+      </div>
+      <TaskModal
+        isOpen={taskModalOpen}
+        onClose={() => setTaskModalOpen(false)}
+        onAddTask={addTask}
+      />
+      <SessionTaskHistoryPanel
         isOpen={panelOpen}
         sessions={sessionHistory}
+        tasks={taskHistory}
         onClose={() => setPanelOpen(false)}
-        onDelete={deleteSession}
-        onClearAll={clearAllSessions}
+        onDeleteSession={deleteSession}
+        onDeleteTask={deleteTask}
+        onClearAllSessions={clearAllSessions}
+        onClearAllTasks={clearAllTasks}
+        onToggleTaskCompleted={toggleTaskCompleted}
       />
 
       <div className="counter-container">
@@ -216,7 +256,7 @@ export default function Counter() {
 
         <div className="counter-input-wrapper">
           <label className="input-label" htmlFor="minute-input">
-            Çalışma Süresi
+            Çalışma Süreci
           </label>
           <div className="counter-input-field-wrapper">
             <input
@@ -234,7 +274,6 @@ export default function Counter() {
           </div>
         </div>
 
-        {/* Butonlar */}
         <div className="button-group">
           <button onClick={handleMainButtonClick} className="start-button">
             {renderButtonText()}
@@ -249,10 +288,8 @@ export default function Counter() {
           </button>
         </div>
 
-        {/* Sayaç */}
         <h2 className="counter-display">{util.formatTime(count)}</h2>
 
-        {/* Confetti & Tebrik Ekranı */}
         {showCongrats && (
           <div className="congrats-overlay">
             <Confetti width={width} height={height} numberOfPieces={300} recycle={false} />
